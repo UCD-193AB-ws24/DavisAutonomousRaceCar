@@ -1,82 +1,91 @@
+import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-from skimage.morphology import medial_axis, skeletonize
 
-def compute_medial_axis(binary_mask):
+def get_perspective_transform(src_points, dst_points):
     """
-    Computes the medial axis (skeleton) and distance transform of the binary mask.
-    
-    Parameters:
-        binary_mask (np.ndarray): 2D numpy array (values 0 or 1).
-    
-    Returns:
-        skel (np.ndarray): Binary image with the medial axis.
-        distance (np.ndarray): Distance transform (each pixel's distance to the nearest boundary).
+    Computes the perspective transform matrix and its inverse.
     """
-    skel, distance = medial_axis(binary_mask, return_distance=True)
-    return skel, distance
+    src = np.float32(src_points)
+    dst = np.float32(dst_points)
+    M = cv2.getPerspectiveTransform(src, dst)
+    M_inv = cv2.getPerspectiveTransform(dst, src)
+    return M, M_inv
 
-def compute_row_by_row_centerline(binary_mask):
+def warp_image(image, M, width, height):
     """
-    Computes the centerline of a binary mask using a row-by-row boundary method.
-    
-    Parameters:
-        binary_mask (np.ndarray): 2D numpy array (values 0 or 1).
-        
-    Returns:
-        np.ndarray: An array of (x, y) points representing the centerline.
+    Applies a perspective warp to the image using the matrix M.
     """
-    rows, cols = binary_mask.shape
-    centerline_points = []
+    warped = cv2.warpPerspective(image, M, (width, height), flags=cv2.INTER_LINEAR)
+    return warped
 
-    for row in range(rows):
-        # Find all column indices where the track is present in this row.
-        indices = np.where(binary_mask[row, :] > 0)[0]
-        if indices.size > 0:
-            left = indices[0]
-            right = indices[-1]
-            mid = (left + right) / 2.0  # Compute the horizontal midpoint
-            centerline_points.append((mid, row))
+def calculate_midpoint_from_mask(mask):
+    """
+    Calculates the midpoint of the track boundaries from a binary mask.
+    Assumes the largest contour represents the track.
+    """
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return None
     
-    return np.array(centerline_points)
+    # Assume the largest contour corresponds to the track boundary
+    contour = max(contours, key=cv2.contourArea)
+    
+    # Get the leftmost and rightmost points in the contour
+    left = tuple(contour[contour[:, :, 0].argmin()][0])
+    right = tuple(contour[contour[:, :, 0].argmax()][0])
+    
+    # The midpoint is the average of the leftmost and rightmost points
+    midpoint = ((left[0] + right[0]) // 2, (left[1] + right[1]) // 2)
+    return midpoint
 
 def main():
-    # Create a synthetic binary mask representing a track.
-    # For a more realistic scenario, replace this with your segmentation output.
-    height, width = 200, 400
-    mask = np.zeros((height, width), dtype=np.uint8)
-    
-    # Draw a track-like rectangle in the middle and add a slight curvature.
-    for i in range(80, 120):
-        shift = int(20 * np.sin((i - 80) / 40 * np.pi))
-        mask[i, 100 + shift:300 + shift] = 1
+    # Open a video stream or video file
+    cap = cv2.VideoCapture(0)  # Change to video file if needed
 
-    binary_mask = mask
+    # Define source (from camera) and destination (bird's-eye view) points.
+    # These must be calibrated for your specific setup.
+    src_points = [[100, 200], [220, 200], [20, 0], [300, 0]]
+    dst_points = [[100, 240], [220, 240], [100, 0], [220, 0]]
+    width, height = 320, 240
 
-    # Compute the medial axis using scikit-image.
-    skel, distance = compute_medial_axis(binary_mask)
-    
-    # Compute the centerline using the row-by-row method.
-    row_centerline = compute_row_by_row_centerline(binary_mask)
-    
-    # Plot the results.
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
-    
-    axes[0].imshow(binary_mask, cmap='gray')
-    axes[0].set_title("Original Binary Mask")
-    
-    axes[1].imshow(skel, cmap='gray')
-    axes[1].set_title("Medial Axis (Skeletonization)")
-    
-    axes[2].imshow(binary_mask, cmap='gray')
-    axes[2].scatter(row_centerline[:, 0], row_centerline[:, 1], color='red', s=10)
-    axes[2].set_title("Row-by-Row Centerline")
-    
-    for ax in axes:
-        ax.axis('off')
-    
-    plt.tight_layout()
-    plt.show()
+    # Compute perspective transform matrices
+    M, M_inv = get_perspective_transform(src_points, dst_points)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Apply perspective warp to obtain bird's-eye view
+        warped = warp_image(frame, M, width, height)
+        
+        # --- Segmentation ---
+        # For demonstration, we use a simple threshold as a placeholder.
+        # Replace the following lines with your actual segmentation mask when available.
+        gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+        _, mask = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
+        
+        # Calculate the midpoint from the binary mask
+        midpoint = calculate_midpoint_from_mask(mask)
+        
+        # Visualize results by drawing the midpoint on the warped image
+        display = warped.copy()
+        if midpoint is not None:
+            cv2.circle(display, midpoint, 5, (0, 0, 255), -1)
+            cv2.putText(display, f"Midpoint: {midpoint}", (midpoint[0]-40, midpoint[1]-10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        
+        # Show windows for debugging/visualization
+        cv2.imshow("Warped Image", warped)
+        cv2.imshow("Mask", mask)
+        cv2.imshow("Midpoint Display", display)
+        
+        # Exit on pressing 'Esc'
+        if cv2.waitKey(30) & 0xFF == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()
