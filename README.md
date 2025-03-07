@@ -1,4 +1,4 @@
-# **Autonomous Race Car Setup Guide**
+# **Autonomous Race Car Setup Guide (how to drive autonomously given that we we provide it a fully functioning map; PNG and YAML)**
 
 ## **Step 1: Verify Map Placement**
 1. **Ensure the map files are in the correct directory:**  
