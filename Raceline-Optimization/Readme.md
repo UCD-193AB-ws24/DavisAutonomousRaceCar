@@ -5,7 +5,7 @@
 First, clone the repository:
 
 ```bash
-git clone https://github.com/ian-chuang/Raceline-Optimization.git
+git clone https://github.com/Nazari-Lab/Raceline-Optimization.git
 cd Raceline-Optimization
 ```
 
