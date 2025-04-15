@@ -14,8 +14,12 @@ Follow the following steps to achieve perspective transform:
 
 A **homography matrix \( H \)** is a 3×3 matrix where it has 9 elements: h<sub>11</sub>, h<sub>12</sub>, ... , h<sub>33</sub>. The homography matrix can be defiend as a matrix that relates the transformation between two planes up to a scalar factor. Thus, when the coordinate pair (x, y) represents a point in original plane where (x', y') represents a point in transformed pair, following equation describes the relation between the two planes: 
 
+![Homography Matrix](./images/homography_matrix.png)
+
+<!--
+
 $$
-s
+s \cdot
 \begin{bmatrix}
 x' \\
 y' \\
@@ -28,15 +32,21 @@ x \\
 y \\
 1
 \end{bmatrix}
-$$
 
-$$
-H = \begin{bmatrix}
+ = \begin{bmatrix}
 h_{11} & h_{12} & h_{13} \\
 h_{21} & h_{22} & h_{23} \\
 h_{31} & h_{32} & h_{33}
 \end{bmatrix}
+\cdot
+\begin{bmatrix}
+x' \\
+y' \\
+1
+\end{bmatrix}
 $$
+
+-->
 
 Although homography matrix has 9 elements, it only has 8 degree of freedom. This is because the matrix is defined up to a scale. Thus scaling the entire matrix by any non-zero values will result in same transformation which makes one of the 9 parameter redundant (usually element h<sub>33</sub> is set to 1).
 
@@ -238,6 +248,8 @@ This is a geometric approach for finding anchor points — particularly useful f
 [Fast Anchor Point Matching For Stitching](https://www.mdpi.com/1424-8220/20/7/2007?utm_source=chatgpt.com)
 
 
+
+<!--
 ## Best Practices for Perspective Transform In General
 
 ## Depth Camera in Perspective Transform
@@ -253,3 +265,5 @@ This is a geometric approach for finding anchor points — particularly useful f
 
 
 ## Machine Learning in Perspective Transform
+
+-->
