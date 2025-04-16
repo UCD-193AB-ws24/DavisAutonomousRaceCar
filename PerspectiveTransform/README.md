@@ -218,6 +218,7 @@ In terms of perspective transform, the anchor points refers to the specific know
 This is the most common approach in computer vision for automatically selecting anchor points. These algorithms identify keypoints in an image — distinctive, local patterns like corners or blobs — and extract descriptors to match these keypoints across images.
 
 - Scale-Invariant Feature Transform (SIFT)
+<!--Gaussian Kernel-->
 
 - Oriented FAST and Rotated BRIEF (ORB)
 
