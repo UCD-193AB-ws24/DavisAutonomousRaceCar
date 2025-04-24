@@ -15,8 +15,8 @@ Follow the following steps to achieve perspective transform:
 A **homography matrix \( H \)** is a 3×3 matrix where it has 9 elements: h<sub>11</sub>, h<sub>12</sub>, ... , h<sub>33</sub>. The homography matrix can be defiend as a matrix that relates the transformation between two planes up to a scalar factor. Thus, when the coordinate pair (x, y) represents a point in original plane where (x', y') represents a point in transformed pair, following equation describes the relation between the two planes: 
 
 ![Homography Matrix](./images/homography_matrix.png)
+<!--![한글 IPM](https://gaussian37.github.io/vision-concept-ipm/)-->
 
-<!--
 
 $$
 s \cdot
@@ -91,11 +91,41 @@ r_{31} & r_{32} & r_{33}
 \end{bmatrix}
 $$
 
-**r<sub>1j</sub> (1<sup>st</sup> column)**: Unit vector of x-axis of the camera in world coordinates (right)
+$$
+R = R_x \times R_y \times R_z
+$$
 
-**r<sub>2j</sub> (2<sup>nd</sup> column)**: The x-axis of the camera in world coordinates (right)
+$$
+R_x =
+\begin{bmatrix}
+1 & 0 & 0 \\
+0 & cos(θ) & -sin(θ) \\
+0 & sin(θ) & cos(θ)
+\end{bmatrix}
+$$
 
-**r<sub>3j</sub> (3<sup>rd</sup> column)**: The x-axis of the camera in world coordinates (right)
+$$
+R_y =
+\begin{bmatrix}
+cos(θ) & 0 & sin(θ) \\
+0 & 1 & 0 \\
+-sin(θ) & 0 & cos(θ)
+\end{bmatrix}
+$$
+
+$$
+R_z =
+\begin{bmatrix}
+cos(θ) & -sin(θ) & 0 \\
+sin(θ) & cos(θ) & 0\\
+0 & 0 & 1
+\end{bmatrix}
+$$
+**R<sub>x</sub> **: Rotation about x-axis
+
+**R<sub>y</sub> **: Rotation about y-axis
+
+**R<sub>z</sub> **: Rotation about z-axis
 
 A **Translation vector \( t \)** 
 
