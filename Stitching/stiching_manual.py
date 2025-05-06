@@ -7,9 +7,9 @@ User Defined Section
 =====================
 """
 # Provide paths to your images
-original_image_path = './Stitching/src/images/track_circle_big_12.jpg'
-target_image_path = './Stitching/src/images/track_circle_big_3.jpg'
-output_image_path = './Stitching/src/images/track_circle_big_final.jpg'
+original_image_path = './Stitching/src/images/track_elipse_13.jpg'
+target_image_path = './Stitching/src/images/track_elipse_4.jpg'
+output_image_path = './Stitching/src/images/track_elipse_final.jpg'
 
 """
 =====================
