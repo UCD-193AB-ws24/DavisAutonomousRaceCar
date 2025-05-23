@@ -96,7 +96,7 @@ class PurePursuit(Node):
         else:
             steering_angle = self.calc_steer(local_goal_point, self.kp_slow, self.pp_steer_L_slow)        
         
-        if not self.use_obs_avoid:
+        if not self.use_obs_avoid: ###### Changed this
             msg = AckermannDriveStamped()
             msg.drive.steering_angle = float(steering_angle)
             msg.drive.speed = float(drive_speed)

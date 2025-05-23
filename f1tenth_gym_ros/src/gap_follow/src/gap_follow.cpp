@@ -123,7 +123,7 @@ void ReactiveFollowGap::lidar_callback(const sensor_msgs::msg::LaserScan::ConstS
 
 void ReactiveFollowGap::gap_callback(const std_msgs::msg::Bool::ConstSharedPtr gap_bool) {
     // var to use gap follow or not
-    use_gap = gap_bool->data;
+    use_gap = gap_bool->data; // Changed this
 }
 
 void ReactiveFollowGap::velocity_callback(const std_msgs::msg::Float64::ConstSharedPtr val) {
