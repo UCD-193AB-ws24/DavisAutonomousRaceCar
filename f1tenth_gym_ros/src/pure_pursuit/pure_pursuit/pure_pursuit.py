@@ -1,4 +1,3 @@
-
 # code adapted from https://github.com/ladavis4/F1Tenth_Final_Project_and_ICRA2022/tree/main/pure_pursuit_pkg
 import os
 
@@ -70,37 +69,52 @@ class PurePursuit(Node):
         This is the main pure pursuit callback loop
         All parameters are set in the init function
         """
-        # parse information from pose_msg
-        current_position = pose_msg.pose.pose.position
-        current_quat = pose_msg.pose.pose.orientation
+        try:
+            # parse information from pose_msg
+            current_position = pose_msg.pose.pose.position
+            current_quat = pose_msg.pose.pose.orientation
 
-        # get the current spline index of the car and goal point
-        self.spline_index_car = self.get_closest_point_to_car(current_position, self.pp_spline_points)
+            # get the current spline index of the car and goal point
+            self.spline_index_car = self.get_closest_point_to_car(current_position, self.pp_spline_points)
 
-        #Determine the speed from the velocity profile
-        drive_speed = self.drive_velocity[self.spline_index_car]
-        msg = Float64()
-        msg.data = drive_speed
-        self.velocity_publisher.publish(msg)
+            #Determine the speed from the velocity profile
+            drive_speed = self.drive_velocity[self.spline_index_car]
+            msg = Float64()
+            msg.data = drive_speed
+            self.velocity_publisher.publish(msg)
 
-        # Calculate goal point
-        if drive_speed > self.L_threshold_speed:
-            global_goal_point = self.find_goal_point(self.pp_steer_L_fast)
-        else:
-            global_goal_point = self.find_goal_point(self.pp_steer_L_slow)
-        local_goal_point = self.global_2_local(current_quat, current_position, global_goal_point)
-        
-        # Calculate steer angle
-        if drive_speed > self.L_threshold_speed:
-            steering_angle = self.calc_steer(local_goal_point, self.kp_fast, self.pp_steer_L_fast)
-        else:
-            steering_angle = self.calc_steer(local_goal_point, self.kp_slow, self.pp_steer_L_slow)        
-        
-        if not self.use_obs_avoid:
-            msg = AckermannDriveStamped()
-            msg.drive.steering_angle = float(steering_angle)
-            msg.drive.speed = float(drive_speed)
-            self.drive_publisher.publish(msg)
+            # Calculate goal point
+            if drive_speed > self.L_threshold_speed:
+                global_goal_point = self.find_goal_point(self.pp_steer_L_fast)
+            else:
+                global_goal_point = self.find_goal_point(self.pp_steer_L_slow)
+            local_goal_point = self.global_2_local(current_quat, current_position, global_goal_point)
+            
+            # Calculate steer angle
+            if drive_speed > self.L_threshold_speed:
+                steering_angle = self.calc_steer(local_goal_point, self.kp_fast, self.pp_steer_L_fast)
+            else:
+                steering_angle = self.calc_steer(local_goal_point, self.kp_slow, self.pp_steer_L_slow)            
+            
+            if not self.use_obs_avoid:
+                msg = AckermannDriveStamped()
+                msg.drive.steering_angle = float(steering_angle)
+                msg.drive.speed = float(drive_speed)
+                self.drive_publisher.publish(msg)
+                
+                # Log detailed information
+                self.get_logger().info(
+                    f'\n=== Pure Pursuit Drive Command ===\n'
+                    f'Node: Pure Pursuit\n'
+                    f'Current Position: ({current_position.x:.2f}, {current_position.y:.2f})\n'
+                    f'Next Goal Point: ({global_goal_point[0]:.2f}, {global_goal_point[1]:.2f})\n'
+                    f'Steering Angle: {steering_angle:.2f} rad\n'
+                    f'Speed: {drive_speed:.2f} m/s\n'
+                    f'Waypoint Index: {self.spline_index_car}\n'
+                    f'================================'
+                )
+        except Exception as e:
+            self.get_logger().error(f"Error in pose_callback: {str(e)}")
 
     def calc_steer(self, goal_point_car, kp, L):
         """

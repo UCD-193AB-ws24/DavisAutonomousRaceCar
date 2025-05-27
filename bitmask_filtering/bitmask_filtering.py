@@ -7,14 +7,18 @@ from src.bitmask_filtering import (
     convert_white_to_light_gray,
     convert_black_to_light_gray,
     resize_image,
-    convert_border_gray_to_black
+    convert_border_gray_to_black,
+    expand_track,
+    filter_blobs
 )
 
 # === USER INPUT ===
-INPUT_IMAGE_FILENAME = "track_1.png"  # Just the filename
-OUTPUT_IMAGE_FILENAME = "track_1_220px.png"  # Just the filename
-RESIZE_WIDTH = 220
-ROTATION_ANGLE = 45  # Rotation angle in degrees (positive for counterclockwise)
+INPUT_IMAGE_FILENAME = "bitmask_eight.png"  # Just the filename
+OUTPUT_IMAGE_FILENAME = "eight_160px.png"  # Just the filename
+RESIZE_WIDTH = 160
+ROTATION_ANGLE = 75  # Rotation angle in degrees (positive for counterclockwise)
+PADDING_WIDTH = 20  # Width of padding in pixels
+TRACK_PADDING = 3  # Number of pixels to expand the track outward
 # ===================
 
 # Global Variables
@@ -77,6 +81,34 @@ def rotate_image(image, angle):
     
     return rotated
 
+def add_padding(image, padding_width):
+    """
+    Add padding of hex color #CDCDCD to all edges of the image.
+    
+    Args:
+        image: Input image (numpy array)
+        padding_width: Width of padding in pixels
+        
+    Returns:
+        numpy array: Image with padding added
+    """
+    print(f"Adding {padding_width} pixel padding...")
+    # Define the padding color (hex #CDCDCD in BGR)
+    padding_color = [205, 205, 205]  # BGR format
+    
+    # Add padding to all sides
+    padded_image = cv2.copyMakeBorder(
+        image,
+        padding_width,  # top
+        padding_width,  # bottom
+        padding_width,  # left
+        padding_width,  # right
+        cv2.BORDER_CONSTANT,
+        value=padding_color
+    )
+    
+    return padded_image
+
 def main():
     try:
         # Load the input image
@@ -96,6 +128,14 @@ def main():
             
         start_x, start_y = inner_point
         
+        # Visualize the selected point
+        point_visualization = image.copy()
+        cv2.circle(point_visualization, (start_x, start_y), 10, (0, 255, 0), -1)  # Green circle
+        cv2.imshow("Selected Point Inside Track", point_visualization)
+        print("Press any key to continue...")
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        
         # Step 2: Convert white pixels to light gray
         print("\nStep 2: Converting white pixels to light gray...")
         gray_image = convert_white_to_light_gray(image)
@@ -104,27 +144,54 @@ def main():
         print("\nStep 3: Applying flood fill...")
         filled_image = flood_fill_black(gray_image, start_x, start_y)
         
-        # Step 4: Convert black pixels to light gray
-        print("\nStep 4: Converting black pixels to light gray...")
-        final_image = convert_black_to_light_gray(filled_image)
+        cv2.imshow("After flood fill", filled_image)
+        print("Press any key to exit...")
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         
-        # Step 5: Resize and rotate the final image
-        print("\nStep 5: Resizing and rotating final image...")
-        resized_final = resize_image(final_image, RESIZE_WIDTH)
+        # Step 4: Resize and rotate the final image
+        print("\nStep 4: Resizing and rotating final image...")
+        resized_final = resize_image(filled_image, RESIZE_WIDTH)
         if ROTATION_ANGLE != 0:
             resized_final = rotate_image(resized_final, ROTATION_ANGLE)
         
+        # Step 5: Convert black pixels to light gray
+        print("\nStep 5: Converting black pixels to light gray...")
+        final_image = convert_black_to_light_gray(resized_final)
+        
         # Step 6: Convert border gray pixels to black
         print("\nStep 6: Converting border gray pixels to black...")
-        final_border = convert_border_gray_to_black(resized_final)
+        final_border = convert_border_gray_to_black(final_image)
+        
+        # Step 7: Expand track
+        print("\nStep 7: Expanding track...")
+        final_expanded = expand_track(final_border, TRACK_PADDING)
+        
+        # Step 8: Add padding
+        print("\nStep 8: Adding padding...")
+        final_padded = add_padding(final_expanded, PADDING_WIDTH)
+        
+        # Step 9: Filter out isolated black pixels (final cleanup)
+        print("\nStep 9: Final cleanup - filtering out isolated black pixels...")
+        final_filtered = filter_blobs(final_padded)
         
         # Save the final result
         output_filled_path = OUTPUT_IMAGE_PATH.replace(".png", f"_filled_{ROTATION_ANGLE}deg.png")
-        cv2.imwrite(output_filled_path, final_border)
+        cv2.imwrite(output_filled_path, final_filtered)
         print(f"\nFinal image saved to: {output_filled_path}")
         
-        # Show the final result
-        cv2.imshow("Final Result", final_border)
+        # Show two separate windows
+        cv2.namedWindow("Original Track", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("Final Track", cv2.WINDOW_NORMAL)
+        
+        # Set initial window sizes
+        cv2.resizeWindow("Original Track", 600, 600)
+        cv2.resizeWindow("Final Track", 600, 600)
+        
+        # Show images in separate windows
+        cv2.imshow("Original Track", final_border)
+        cv2.imshow("Final Track", final_filtered)
+        
         print("Press any key to exit...")
         cv2.waitKey(0)
         cv2.destroyAllWindows()

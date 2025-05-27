@@ -112,12 +112,20 @@ void ReactiveFollowGap::lidar_callback(const sensor_msgs::msg::LaserScan::ConstS
         }
         else{
             drive_msg.drive.steering_angle = 0;
-
         }
         // scale the drive vel based on the range in front of the car
         drive_msg.drive.speed = drive_speed_calc(ranges_p, angles_p, num_readings_p, pure_pursuit_velocity); 
         // publish the drive message
         drive_publisher->publish(drive_msg);
+        
+        // Log the command and gap information
+        RCLCPP_INFO(this->get_logger(), 
+            "[Gap Following] Sending command - Speed: %.2f, Steering: %.2f, Gap Index: %d, Going to hit: %s",
+            drive_msg.drive.speed,
+            drive_msg.drive.steering_angle,
+            drive_idx,
+            going_to_hit ? "true" : "false"
+        );
     }
 }
 
