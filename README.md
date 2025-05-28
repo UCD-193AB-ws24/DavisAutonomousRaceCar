@@ -1,3 +1,49 @@
+# Davis Autonomous Race Car
+
+This repository contains the codebase for the UC Davis Autonomous Race Car project, built on the F1TENTH platform. The system enables autonomous racing capabilities through a combination of localization, mapping, and control algorithms.
+
+## Repository Structure
+
+### Core Components
+- `darc_f1tenth_system/`: Main ROS2 package containing the core autonomous driving system
+- `particle_filter/`: Implementation of particle filter for robot localization
+- `bitmask_filtering/`: Algorithms for processing and filtering sensor data
+- `automatic_bitmask_stitching/`: Tools for creating and managing environment maps
+- `f1tenth_gym_ros/`: ROS2 integration with the F1TENTH gym simulator
+- `tests/`: Unit and integration tests for the system
+- `docs/`: Additional documentation and guides
+
+### Supporting Tools
+- `PerspectiveTransform/`: Tools for camera perspective transformation
+- `Raceline-Optimization/`: Algorithms for optimal racing line computation
+- `Stitching/`: Map stitching and processing utilities
+
+## System Architecture
+
+The autonomous race car system consists of several key components:
+
+1. **Localization System**
+   - Particle filter-based localization
+   - Map-based position estimation
+   - Real-time pose tracking
+
+2. **Perception System**
+   - LiDAR data processing
+   - Bitmask filtering for obstacle detection
+   - Environment mapping
+
+3. **Control System**
+   - Pure pursuit path following
+   - Velocity and steering control
+   - Obstacle avoidance
+
+4. **Planning System**
+   - Raceline optimization
+   - Path planning
+   - Trajectory generation
+
+## Getting Started
+
 # **Autonomous Race Car Setup Guide (how to drive autonomously given that we we provide it a fully functioning map; PNG and YAML)**
 
 ## **Step 1: Verify Map Placement**
@@ -97,14 +143,14 @@ ros2 launch f1tenth_stack particle_filter_launch.py
 This will:
 - Start **particle filter localization**.
 - Load the **pre-existing map**.
-- Begin estimating the car’s real-time position.
+- Begin estimating the car's real-time position.
 
 ### **2. Set the Initial Pose in RViz**
 1. Open **RViz** (it should launch automatically).
 2. Click **"2D Pose Estimate"** from the toolbar.
 3. Click and drag on the map where the car is physically located.
 
-Now, the car’s estimated pose should be visualized as a cluster of particles.
+Now, the car's estimated pose should be visualized as a cluster of particles.
 
 ### **3. Verify Localization**
 Run:
@@ -181,3 +227,49 @@ This resets all nodes and often fixes connectivity issues.
 
 ## **Final Confirmation**
 Once the car moves and follows the raceline, **autonomous mode is fully active!** 🎉
+
+## Development Guidelines
+
+### Prerequisites
+- ROS2 Foxy
+- Python 3.8+
+- CMake 3.16+
+- Required ROS2 packages (listed in package.xml)
+
+### Building the Project
+```bash
+# Clone the repository
+git clone [repository-url]
+
+# Build the workspace
+cd f1tenth_ws
+colcon build
+
+# Source the workspace
+source install/setup.bash
+```
+
+### Running Tests
+```bash
+# Run all tests
+colcon test
+
+# View test results
+colcon test-result --verbose
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contact
+
+For questions and support, please contact the UC Davis Autonomous Race Car team.
