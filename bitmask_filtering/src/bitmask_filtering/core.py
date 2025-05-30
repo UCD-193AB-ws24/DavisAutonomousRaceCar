@@ -4,7 +4,6 @@ import numpy as np
 def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
     """
     Flood fill all connected black pixels starting from (x,y) coordinate.
-    Treats border pixels as valid neighbors for flood filling.
     
     Args:
         image: Input image (numpy array)
@@ -12,7 +11,7 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
         y: Starting y coordinate
         new_color: Color to replace black pixels with (default: [255, 255, 255] - white)
     """
-    print(f"Starting flood fill operation from point ({x}, {y})...")
+    print("Starting flood fill operation...")
     
     # Create a copy of the image to avoid modifying the original
     filled_image = image.copy()
@@ -20,19 +19,17 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
     # Get image dimensions
     height, width = filled_image.shape[:2]
     total_pixels = height * width
-    print(f"Image dimensions: {width}x{height}")
     
     # Check if starting point is within image bounds
     if x < 0 or x >= width or y < 0 or y >= height:
-        print(f"Starting point ({x}, {y}) is out of bounds!")
         return filled_image
+    
+    # Get the target color (black)
+    target_color = [0, 0, 0]
     
     # Check if starting point is black
-    if not np.array_equal(filled_image[y, x], [0, 0, 0]):
-        print(f"Starting point ({x}, {y}) is not black! Color: {filled_image[y, x]}")
+    if not np.array_equal(filled_image[y, x], target_color):
         return filled_image
-    
-    print(f"Starting point ({x}, {y}) is black, beginning flood fill...")
     
     # Create a visited array to track processed pixels
     visited = np.zeros((height, width), dtype=bool)
@@ -41,10 +38,8 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
     queue = [(x, y)]
     visited[y, x] = True
     
-    # Define 8-connectivity (all surrounding pixels)
-    directions = [(-1, -1), (-1, 0), (-1, 1),
-                 (0, -1),          (0, 1),
-                 (1, -1),  (1, 0), (1, 1)]
+    # Define 4-connectivity (up, down, left, right)
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     
     # Progress tracking
     processed_pixels = 0
@@ -68,23 +63,27 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
             new_x = current_x + dx
             new_y = current_y + dy
             
-            # Check if the new coordinates are within bounds
-            if 0 <= new_x < width and 0 <= new_y < height:
-                # Check if the new coordinates are not visited and are black
-                if not visited[new_y, new_x] and np.array_equal(filled_image[new_y, new_x], [0, 0, 0]):
-                    queue.append((new_x, new_y))
-                    visited[new_y, new_x] = True
+            # Check if the new coordinates are within bounds and not visited
+            if (0 <= new_x < width and 0 <= new_y < height and 
+                not visited[new_y, new_x] and 
+                np.array_equal(filled_image[new_y, new_x], target_color)):
+                queue.append((new_x, new_y))
+                visited[new_y, new_x] = True
     
-    print(f"Flood fill completed! Processed {processed_pixels} pixels.")
+    print("Flood fill completed!")
     return filled_image
 
 def find_point_inside_track(image):
     """
     Find a pixel coordinate that lies inside the race track.
-    Uses state machine to find point between white lines:
-    - First white line
-    - Black region
-    - Second white line
+    The function scans from the origin (0,0) to find a point that's inside the track.
+    Accounts for multi-pixel wide track lines.
+    
+    Args:
+        image: Input image (numpy array)
+        
+    Returns:
+        tuple: (x, y) coordinates of a point inside the track, or None if not found
     """
     print("Searching for point inside track...")
     height, width = image.shape[:2]
@@ -92,31 +91,34 @@ def find_point_inside_track(image):
     # Define white color
     white = [255, 255, 255]
     
-    # Step size for faster scanning (check every 5th pixel)
-    step = 5
+    # Minimum number of continuous white pixels to consider it a track line
+    min_track_width = 3
     
     # Start scanning from origin (0,0)
-    for y in range(0, height, step):
-        # Reset state for each new row
-        first_white = False
-        black_region = False
-        last_black_x = 0
-        
-        for x in range(0, width, step):
-            # State machine logic
-            if np.array_equal(image[y, x], white):
-                if first_white and black_region:
-                    # We found the second white line, return the last black point
-                    print(f"Found point inside track at: ({last_black_x}, {y})")
-                    return (last_black_x, y)
-                elif not first_white:
-                    first_white = True
-                    print(f"Found first white pixel at: ({x}, {y})")
-            elif np.array_equal(image[y, x], [0, 0, 0]):  # Only check for black pixels (not gray)
-                if first_white and not black_region:
-                    black_region = True
-                    last_black_x = x
-                    print(f"Entered black region at: ({x}, {y})")
+    for y in range(height):
+        for x in range(width):
+            if not np.array_equal(image[y, x], white):
+                # Found a black pixel, check if it's inside the track
+                # Check for continuous white pixels to the left
+                left_white_count = 0
+                for left_x in range(x-1, -1, -1):
+                    if np.array_equal(image[y, left_x], white):
+                        left_white_count += 1
+                    else:
+                        break
+                
+                # Check for continuous white pixels to the right
+                right_white_count = 0
+                for right_x in range(x+1, width):
+                    if np.array_equal(image[y, right_x], white):
+                        right_white_count += 1
+                    else:
+                        break
+                
+                # If we have enough white pixels on both sides, we're inside the track
+                if left_white_count >= min_track_width and right_white_count >= min_track_width:
+                    print(f"Found point inside track at: ({x}, {y})")
+                    return (x, y)
     
     print("No suitable point inside track found")
     return None
@@ -240,149 +242,5 @@ def convert_border_gray_to_black(image):
                         if np.array_equal(result[ny, nx], white):
                             result[y, x] = black
                             break
-    
-    return result
-
-def add_padding(image, padding_width):
-    """
-    Add padding of specified width to all edges of the image.
-    
-    Args:
-        image: Input image (numpy array)
-        padding_width: Width of padding in pixels
-        
-    Returns:
-        numpy array: Image with padding added
-    """
-    print(f"Adding {padding_width} pixel padding...")
-    # Define the padding color (hex #CDCDCD in BGR)
-    padding_color = [205, 205, 205]  # BGR format
-    
-    # Add padding to all sides
-    padded_image = cv2.copyMakeBorder(
-        image,
-        padding_width,  # top
-        padding_width,  # bottom
-        padding_width,  # left
-        padding_width,  # right
-        cv2.BORDER_CONSTANT,
-        value=padding_color
-    )
-    
-    return padded_image
-
-def expand_track(image, padding_pixels):
-    """
-    Expand the track outward by converting black pixels to white if they don't have any gray pixels
-    in their 8 neighboring directions.
-    Stops the entire expansion process if any black pixel reaches the image border.
-    Args:
-        image: Input image (numpy array)
-        padding_pixels: Number of pixels to expand the track
-    Returns:
-        numpy array: Image with expanded track
-    """
-    print(f"Expanding track by {padding_pixels} pixels...")
-    result = image.copy()
-    white = [255, 255, 255]
-    gray = [205, 205, 205]
-    black = [0, 0, 0]
-    height, width = image.shape[:2]
-    
-    # Check all 8 neighboring directions
-    directions = [(-1, -1), (-1, 0), (-1, 1),
-                  (0, -1),          (0, 1),
-                  (1, -1),  (1, 0), (1, 1)]
-    
-    for iteration in range(padding_pixels):
-        current = result.copy()
-        # First pass: convert black pixels to white if they don't have any gray neighbors
-        to_white = []
-        for y in range(height):
-            for x in range(width):
-                if np.array_equal(current[y, x], black):
-                    # Check if this black pixel is at the edge
-                    if x == 0 or y == 0 or x == width - 1 or y == height - 1:
-                        print(f"Stopping expansion at iteration {iteration + 1} - black pixel reached image border")
-                        return result  # Stop the entire expansion process
-                    
-                    # Check if any neighbor is gray
-                    has_gray_neighbor = False
-                    for dx, dy in directions:
-                        nx, ny = x + dx, y + dy
-                        if 0 <= nx < width and 0 <= ny < height:
-                            if np.array_equal(current[ny, nx], gray):
-                                has_gray_neighbor = True
-                                break
-                    
-                    # If no gray neighbors, mark for conversion to white
-                    if not has_gray_neighbor:
-                        to_white.append((y, x))
-        
-        for y, x in to_white:
-            result[y, x] = white
-            
-        # Second pass: convert gray pixels bordering white to black
-        current = result.copy()
-        to_black = []
-        for y in range(height):
-            for x in range(width):
-                if np.array_equal(current[y, x], gray):
-                    for dx, dy in directions:
-                        nx, ny = x + dx, y + dy
-                        if 0 <= nx < width and 0 <= ny < height:
-                            if np.array_equal(current[ny, nx], white):
-                                to_black.append((y, x))
-                                break
-        
-        for y, x in to_black:
-            result[y, x] = black
-            
-    return result
-
-def filter_blobs(image):
-    """
-    Remove black pixels that don't have any gray pixels in their 8 neighboring directions.
-    This helps clean up isolated black pixels or small blobs that aren't connected to the main track.
-    
-    Args:
-        image: Input image (numpy array)
-        
-    Returns:
-        numpy array: Image with isolated black pixels removed
-    """
-    print("Filtering out isolated black pixels...")
-    result = image.copy()
-    white = [255, 255, 255]
-    gray = [205, 205, 205]
-    black = [0, 0, 0]
-    height, width = image.shape[:2]
-    
-    # Check all 8 neighboring directions
-    directions = [(-1, -1), (-1, 0), (-1, 1),
-                  (0, -1),          (0, 1),
-                  (1, -1),  (1, 0), (1, 1)]
-    
-    # Find black pixels without gray neighbors
-    to_white = []
-    for y in range(height):
-        for x in range(width):
-            if np.array_equal(result[y, x], black):
-                # Check if any neighbor is gray
-                has_gray_neighbor = False
-                for dx, dy in directions:
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < width and 0 <= ny < height:
-                        if np.array_equal(result[ny, nx], gray):
-                            has_gray_neighbor = True
-                            break
-                
-                # If no gray neighbors, mark for conversion to white
-                if not has_gray_neighbor:
-                    to_white.append((y, x))
-    
-    # Convert marked pixels to white
-    for y, x in to_white:
-        result[y, x] = white
     
     return result 
