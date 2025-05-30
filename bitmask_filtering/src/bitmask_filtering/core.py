@@ -4,6 +4,7 @@ import numpy as np
 def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
     """
     Flood fill all connected black pixels starting from (x,y) coordinate.
+    Treats border pixels as valid neighbors for flood filling.
     
     Args:
         image: Input image (numpy array)
@@ -11,7 +12,7 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
         y: Starting y coordinate
         new_color: Color to replace black pixels with (default: [255, 255, 255] - white)
     """
-    print("Starting flood fill operation...")
+    print(f"Starting flood fill operation from point ({x}, {y})...")
     
     # Create a copy of the image to avoid modifying the original
     filled_image = image.copy()
@@ -19,17 +20,19 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
     # Get image dimensions
     height, width = filled_image.shape[:2]
     total_pixels = height * width
+    print(f"Image dimensions: {width}x{height}")
     
     # Check if starting point is within image bounds
     if x < 0 or x >= width or y < 0 or y >= height:
+        print(f"Starting point ({x}, {y}) is out of bounds!")
         return filled_image
-    
-    # Get the target color (black)
-    target_color = [0, 0, 0]
     
     # Check if starting point is black
-    if not np.array_equal(filled_image[y, x], target_color):
+    if not np.array_equal(filled_image[y, x], [0, 0, 0]):
+        print(f"Starting point ({x}, {y}) is not black! Color: {filled_image[y, x]}")
         return filled_image
+    
+    print(f"Starting point ({x}, {y}) is black, beginning flood fill...")
     
     # Create a visited array to track processed pixels
     visited = np.zeros((height, width), dtype=bool)
@@ -38,8 +41,10 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
     queue = [(x, y)]
     visited[y, x] = True
     
-    # Define 4-connectivity (up, down, left, right)
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    # Define 8-connectivity (all surrounding pixels)
+    directions = [(-1, -1), (-1, 0), (-1, 1),
+                 (0, -1),          (0, 1),
+                 (1, -1),  (1, 0), (1, 1)]
     
     # Progress tracking
     processed_pixels = 0
@@ -63,34 +68,29 @@ def flood_fill_black(image, x, y, new_color=[255, 255, 255]):
             new_x = current_x + dx
             new_y = current_y + dy
             
-            # Check if the new coordinates are within bounds and not visited
-            if (0 <= new_x < width and 0 <= new_y < height and 
-                not visited[new_y, new_x] and 
-                np.array_equal(filled_image[new_y, new_x], target_color)):
-                queue.append((new_x, new_y))
-                visited[new_y, new_x] = True
+            # Check if the new coordinates are within bounds
+            if 0 <= new_x < width and 0 <= new_y < height:
+                # Check if the new coordinates are not visited and are black
+                if not visited[new_y, new_x] and np.array_equal(filled_image[new_y, new_x], [0, 0, 0]):
+                    queue.append((new_x, new_y))
+                    visited[new_y, new_x] = True
     
-    print("Flood fill completed!")
+    print(f"Flood fill completed! Processed {processed_pixels} pixels.")
     return filled_image
 
 def find_point_inside_track(image):
     """
     Find a pixel coordinate that lies inside the race track.
-    1. First flood fill from (0,0) to identify black region
-    2. Then use state machine to find point between white lines:
-       - First white line
-       - Black region
-       - Second white line
+    Uses state machine to find point between white lines:
+    - First white line
+    - Black region
+    - Second white line
     """
     print("Searching for point inside track...")
     height, width = image.shape[:2]
     
     # Define white color
     white = [255, 255, 255]
-    
-    # Step 1: Flood fill from (0,0)
-    print("Step 1: Flood filling from (0,0)...")
-    filled_image = flood_fill_black(image, 0, 0, [128, 128, 128])  # Fill with gray color
     
     # Step size for faster scanning (check every 5th pixel)
     step = 5
@@ -104,7 +104,7 @@ def find_point_inside_track(image):
         
         for x in range(0, width, step):
             # State machine logic
-            if np.array_equal(filled_image[y, x], white):
+            if np.array_equal(image[y, x], white):
                 if first_white and black_region:
                     # We found the second white line, return the last black point
                     print(f"Found point inside track at: ({last_black_x}, {y})")
@@ -112,7 +112,7 @@ def find_point_inside_track(image):
                 elif not first_white:
                     first_white = True
                     print(f"Found first white pixel at: ({x}, {y})")
-            else:  # Black or gray pixel (flood filled)
+            elif np.array_equal(image[y, x], [0, 0, 0]):  # Only check for black pixels (not gray)
                 if first_white and not black_region:
                     black_region = True
                     last_black_x = x

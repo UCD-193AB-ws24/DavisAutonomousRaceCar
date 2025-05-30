@@ -7,11 +7,11 @@ User Defined Section
 =====================
 """
 # Provide paths to your images
-original_image_path = './Stitching/src/eight_12.jpg'
-target_image_path = './Stitching/src/eight_34.jpg'
-output_image_path = './Stitching/src/eight_final.jpg'
+original_image_path = './Stitching/src/track_complex_12.jpg'
+target_image_path = './Stitching/src/track_complex_34.jpg'
+output_image_path = './Stitching/src/track_complex_final.jpg'
 
-"""s
+"""
 =====================s
 Core Programs
 =====================
