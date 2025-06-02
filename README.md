@@ -1,3 +1,49 @@
+# Davis Autonomous Race Car
+
+This repository contains the codebase for the UC Davis Autonomous Race Car project, built on the F1TENTH platform. The system enables autonomous racing capabilities through a combination of localization, mapping, and control algorithms.
+
+## Repository Structure
+
+### Core Components
+- `darc_f1tenth_system/`: Main ROS2 package containing the core autonomous driving system
+- `particle_filter/`: Implementation of particle filter for robot localization
+- `bitmask_filtering/`: Algorithms for processing and filtering sensor data
+- `automatic_bitmask_stitching/`: Tools for creating and managing environment maps
+- `f1tenth_gym_ros/`: ROS2 integration with the F1TENTH gym simulator
+- `tests/`: Unit and integration tests for the system
+- `docs/`: Additional documentation and guides
+
+### Supporting Tools
+- `PerspectiveTransform/`: Tools for camera perspective transformation
+- `Raceline-Optimization/`: Algorithms for optimal racing line computation
+- `Stitching/`: Map stitching and processing utilities
+
+## System Architecture
+
+The autonomous race car system consists of several key components:
+
+1. **Localization System**
+   - Particle filter-based localization
+   - Map-based position estimation
+   - Real-time pose tracking
+
+2. **Perception System**
+   - LiDAR data processing
+   - Bitmask filtering for obstacle detection
+   - Environment mapping
+
+3. **Control System**
+   - Pure pursuit path following
+   - Velocity and steering control
+   - Obstacle avoidance
+
+4. **Planning System**
+   - Raceline optimization
+   - Path planning
+   - Trajectory generation
+
+## Getting Started
+
 # **Autonomous Race Car Setup Guide (how to drive autonomously given that we we provide it a fully functioning map; PNG and YAML)**
 
 ## **Step 1: Verify Map Placement**
